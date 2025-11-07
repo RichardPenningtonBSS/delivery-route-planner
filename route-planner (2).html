@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UK Delivery Route Planner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .form-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+        }
+
+        .form-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .form-title::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 20px;
+            background: #667eea;
+            margin-right: 12px;
+            border-radius: 2px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-row.full {
+            grid-template-columns: 1fr;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        input[type="time"],
+        input[type="number"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        input[type="time"]:focus,
+        input[type="number"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .postcode-list {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 15px;
+            max-height: 250px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+
+        .postcode-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #f0f0f0;
+            gap: 15px;
+        }
+
+        .postcode-item:last-child {
+            border-bottom: none;
+        }
+
+        .postcode-item input[type="checkbox"] {
+            width: auto;
+            padding: 0;
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .postcode-item span {
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .time-window-select {
+            padding: 6px 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+            background: white;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+            min-width: 150px;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .results-section {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .results-section.active {
+            display: block;
+        }
+
+        .results-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .results-title::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 20px;
+            background: #667eea;
+            margin-right: 12px;
+            border-radius: 2px;
+        }
+
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .summary-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+        }
+
+        .summary-card.warning {
+            border-left-color: #ff9800;
+        }
+
+        .summary-card.error {
+            border-left-color: #f44336;
+        }
+
+        .summary-label {
+            font-size: 12px;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+
+        .summary-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .alert {
+            padding: 12px 15px;
+            margin-bottom: 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+        }
+
+        .alert.warning {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ff9800;
+        }
+
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #f44336;
+        }
+
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #4caf50;
+        }
+
+        .alert::before {
+            content: '⚠️';
+            margin-right: 10px;
+            font-size: 16px;
+        }
+
+        .alert.success::before {
+            content: '✓';
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            font-size: 14px;
+        }
+
+        thead {
+            background: #f8f9fa;
+        }
+
+        th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 2px solid #e0e0e0;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+            color: #666;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .stop-number {
+            font-weight: 600;
+            color: #667eea;
+            width: 50px;
+        }
+
+        .postcode {
+            font-weight: 600;
+            color: #333;
+            font-family: 'Courier New', monospace;
+        }
+
+        .time {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .time-window {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .time-window.pre-10 {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .time-window.pre-12 {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .time-window.breach {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .action-lunch {
+            background: #fff8e1;
+            font-weight: 600;
+            color: #f57f17;
+        }
+
+        .action-return {
+            background: #e8f5e9;
+            font-weight: 600;
+            color: #2e7d32;
+        }
+
+        .copy-btn {
+            background: #4caf50;
+            color: white;
+            padding: 8px 16px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+
+        .copy-btn:hover {
+            background: #45a049;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .info-text {
+            font-size: 13px;
+            color: #666;
+            margin-top: 8px;
+            font-style: italic;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+
+            .button-group {
+                display: none;
+            }
+
+            .form-section {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 22px;
+            }
+
+            .summary {
+                grid-template-columns: 1fr;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            th, td {
+                padding: 8px;
+            }
+
+            .postcode-item {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚐 UK Delivery Route Planner</h1>
+            <p>Optimize delivery routes with time window constraints</p>
+        </div>
+
+        <div class="content">
+            <div class="form-section">
+                <div class="form-title">Route Configuration</div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="depot">Depot Postcode</label>
+                        <input type="text" id="depot" value="RG20TG" placeholder="e.g., RG20TG">
+                    </div>
+                    <div class="form-group">
+                        <label for="startTime">Start Time</label>
+                        <input type="time" id="startTime" value="08:00">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="endTime">End Time (Return to Depot)</label>
+                        <input type="time" id="endTime" value="16:00">
+                    </div>
+                    <div class="form-group">
+                        <label for="stopDuration">Stop Duration (minutes)</label>
+                        <input type="number" id="stopDuration" value="20" min="5" max="60">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="lunchDuration">Lunch Break Duration (minutes)</label>
+                        <input type="number" id="lunchDuration" value="50" min="15" max="120">
+                    </div>
+                    <div class="form-group">
+                        <label for="lunchDeadline">Lunch Must Start Before</label>
+                        <input type="time" id="lunchDeadline" value="12:55">
+                    </div>
+                </div>
+
+                <div class="form-row form-row.full">
+                    <div class="form-group">
+                        <label for="postcodes">Delivery Postcodes (one per line)</label>
+                        <textarea id="postcodes" placeholder="RG128FZ&#10;RG12 9RF&#10;HP15 6SP&#10;RG2 7UG&#10;HP12 4HS&#10;RG12 7TB&#10;RG6 6DQ&#10;GU20 6PP&#10;RG41 5HG&#10;RG1 1LZ&#10;SL1 4EP"></textarea>
+                        <div class="info-text">ℹ️ Enter postcodes one per line. You'll set time windows in the next step.</div>
+                    </div>
+                </div>
+
+                <div class="button-group" style="margin-bottom: 20px;">
+                    <button class="btn-primary" onclick="parseAndDisplayPostcodes()">Parse Postcodes & Set Time Windows</button>
+                    <button class="btn-secondary" onclick="clearForm()">Clear All</button>
+                </div>
+
+                <div id="timeWindowSection" class="hidden">
+                    <div class="form-title" style="margin-top: 30px;">⏰ Time Window Constraints</div>
+                    <p class="info-text">Select time windows for deliveries that must be completed before a specific time:</p>
+                    <div class="postcode-list" id="postcodeList"></div>
+                </div>
+
+                <div class="button-group" id="calculateButtonGroup" style="display: none; margin-top: 20px;">
+                    <button class="btn-primary" onclick="calculateRoute()">Calculate Optimized Route</button>
+                    <button class="btn-secondary" onclick="clearForm()">Clear All</button>
+                </div>
+            </div>
+
+            <div class="results-section" id="resultsSection">
+                <div id="alertContainer"></div>
+
+                <div class="summary" id="summaryContainer"></div>
+
+                <div class="table-wrapper">
+                    <table id="scheduleTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">#</th>
+                                <th>Postcode</th>
+                                <th>Action</th>
+                                <th>Arrival</th>
+                                <th>Departure</th>
+                                <th>Duration</th>
+                                <th>Time Window</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scheduleBody"></tbody>
+                    </table>
+                </div>
+
+                <div class="button-group" style="margin-top: 20px;">
+                    <button class="btn-secondary copy-btn" onclick="copyScheduleToClipboard()">📋 Copy Schedule</button>
+                    <button class="btn-secondary" onclick="clearResults()">New Route</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let postcodeTimeWindows = {};
+
+        const POSTCODE_AREAS = {
+            'RG1': { area: 'Reading', region: 'south', priority: 1 },
+            'RG2': { area: 'Reading', region: 'south', priority: 1 },
+            'RG6': { area: 'Earley', region: 'south', priority: 1 },
+            'RG12': { area: 'Bracknell', region: 'south', priority: 2 },
+            'RG41': { area: 'Wokingham', region: 'south', priority: 2 },
+            'RG20': { area: 'Depot', region: 'center', priority: 0 },
+            'HP12': { area: 'High Wycombe', region: 'west', priority: 3 },
+            'HP15': { area: 'High Wycombe', region: 'west', priority: 3 },
+            'SL1': { area: 'Slough', region: 'west', priority: 4 },
+            'GU20': { area: 'Windlesham', region: 'south-west', priority: 5 }
+        };
+
+        function normalizePostcode(pc) {
+            return pc.toUpperCase().replace(/\s+/g, '').trim();
+        }
+
+        function getPostcodePrefix(pc) {
+            const normalized = normalizePostcode(pc);
+            for (let i = normalized.length; i > 0; i--) {
+                const prefix = normalized.substring(0, i);
+                if (POSTCODE_AREAS[prefix]) {
+                    return prefix;
+                }
+            }
+            return normalized.substring(0, 2);
+        }
+
+        function parseAndDisplayPostcodes() {
+            const postcodesText = document.getElementById('postcodes').value;
+            const postcodes = postcodesText
+                .split('\n')
+                .map(pc => pc.trim())
+                .filter(pc => pc.length > 0)
+                .map(normalizePostcode);
+
+            if (postcodes.length === 0) {
+                alert('Please enter at least one postcode');
+                return;
+            }
+
+            postcodeTimeWindows = {};
+            postcodes.forEach(pc => {
+                postcodeTimeWindows[pc] = 'none';
+            });
+
+            displayTimeWindowSelectors(postcodes);
+            document.getElementById('timeWindowSection').classList.remove('hidden');
+            document.getElementById('calculateButtonGroup').style.display = 'flex';
+            document.getElementById('postcodeList').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function displayTimeWindowSelectors(postcodes) {
+            const postcodeList = document.getElementById('postcodeList');
+            postcodeList.innerHTML = '';
+
+            postcodes.forEach(pc => {
+                const item = document.createElement('div');
+                item.className = 'postcode-item';
+                item.innerHTML = `
+                    <span>${pc}</span>
+                    <select class="time-window-select" onchange="updateTimeWindow('${pc}', this.value)">
+                        <option value="none">No Time Window</option>
+                        <option value="pre-10">Before 10:00am</option>
+                        <option value="pre-12">Before 12:00pm</option>
+                    </select>
+                `;
+                postcodeList.appendChild(item);
+            });
+        }
+
+        function updateTimeWindow(postcode, value) {
+            postcodeTimeWindows[postcode] = value;
+        }
+
+        function estimateDrivingTime(from, to) {
+            const fromPrefix = getPostcodePrefix(from);
+            const toPrefix = getPostcodePrefix(to);
+
+            if (fromPrefix === toPrefix) return 10;
+            if (POSTCODE_AREAS[fromPrefix] && POSTCODE_AREAS[toPrefix]) {
+                const fromArea = POSTCODE_AREAS[fromPrefix].area;
+                const toArea = POSTCODE_AREAS[toPrefix].area;
+                if (fromArea === toArea) return 12;
+            }
+            return 20;
+        }
+
+        function optimizeRoute(postcodes, depot) {
+            // Separate postcodes by time window constraint
+            const pre10 = [];
+            const pre12 = [];
+            const noWindow = [];
+
+            postcodes.forEach(pc => {
+                const window = postcodeTimeWindows[pc];
+                if (window === 'pre-10') pre10.push(pc);
+                else if (window === 'pre-12') pre12.push(pc);
+                else noWindow.push(pc);
+            });
+
+            // Sort each group by postcode area
+            const sortByArea = (arr) => {
+                return [...arr].sort((a, b) => {
+                    const prefixA = getPostcodePrefix(a);
+                    const prefixB = getPostcodePrefix(b);
+                    const areaA = POSTCODE_AREAS[prefixA];
+                    const areaB = POSTCODE_AREAS[prefixB];
+
+                    if (!areaA || !areaB) return 0;
+                    if (areaA.priority !== areaB.priority) {
+                        return areaA.priority - areaB.priority;
+                    }
+
+                    const numA = parseInt(prefixA.substring(2)) || 0;
+                    const numB = parseInt(prefixB.substring(2)) || 0;
+                    return numA - numB;
+                });
+            };
+
+            return [...sortByArea(pre10), ...sortByArea(pre12), ...sortByArea(noWindow)];
+        }
+
+        function timeToMinutes(timeStr) {
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            return hours * 60 + minutes;
+        }
+
+        function minutesToTime(minutes) {
+            const hours = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+        }
+
+        function calculateRoute() {
+            const depot = normalizePostcode(document.getElementById('depot').value);
+            const startTime = timeToMinutes(document.getElementById('startTime').value);
+            const endTime = timeToMinutes(document.getElementById('endTime').value);
+            const stopDuration = parseInt(document.getElementById('stopDuration').value);
+            const lunchDuration = parseInt(document.getElementById('lunchDuration').value);
+            const lunchDeadline = timeToMinutes(document.getElementById('lunchDeadline').value);
+
+            const postcodes = Object.keys(postcodeTimeWindows);
+
+            if (postcodes.length === 0) {
+                showAlert('Please enter postcodes first', 'error');
+                return;
+            }
+
+            const optimized = optimizeRoute(postcodes, depot);
+            const schedule = [];
+            let currentTime = startTime;
+            let currentLocation = depot;
+            let lunchTaken = false;
+            let totalDrivingTime = 0;
+            let timeWindowViolations = [];
+
+            for (let i = 0; i < optimized.length; i++) {
+                const postcode = optimized[i];
+                const timeWindow = postcodeTimeWindows[postcode];
+                const driveTime = estimateDrivingTime(currentLocation, postcode);
+                totalDrivingTime += driveTime;
+                const arrivalTime = currentTime + driveTime;
+
+                if (!lunchTaken && arrivalTime + stopDuration > lunchDeadline) {
+                    schedule.push({
+                        number: schedule.length + 1,
+                        postcode: '—',
+                        action: 'Lunch Break',
+                        arrival: minutesToTime(currentTime + driveTime + 1),
+                        departure: minutesToTime(currentTime + driveTime + 1 + lunchDuration),
+                        duration: lunchDuration,
+                        type: 'lunch',
+                        timeWindow: 'none'
+                    });
+                    currentTime = currentTime + driveTime + 1 + lunchDuration;
+                    lunchTaken = true;
+                }
+
+                const departureTime = arrivalTime + stopDuration;
+                let violatesWindow = false;
+
+                if (timeWindow === 'pre-10' && arrivalTime >= timeToMinutes('10:00')) {
+                    violatesWindow = true;
+                    timeWindowViolations.push(`${postcode} (Pre 10:00) - arrives at ${minutesToTime(arrivalTime)}`);
+                } else if (timeWindow === 'pre-12' && arrivalTime >= timeToMinutes('12:00')) {
+                    violatesWindow = true;
+                    timeWindowViolations.push(`${postcode} (Pre 12:00) - arrives at ${minutesToTime(arrivalTime)}`);
+                }
+
+                schedule.push({
+                    number: schedule.length + 1,
+                    postcode: postcode,
+                    action: 'Stop',
+                    arrival: minutesToTime(arrivalTime),
+                    departure: minutesToTime(departureTime),
+                    duration: stopDuration,
+                    type: 'stop',
+                    timeWindow: timeWindow,
+                    violatesWindow: violatesWindow
+                });
+
+                currentTime = departureTime;
+                currentLocation = postcode;
+            }
+
+            const returnDriveTime = estimateDrivingTime(currentLocation, depot);
+            totalDrivingTime += returnDriveTime;
+            const returnTime = currentTime + returnDriveTime;
+
+            schedule.push({
+                number: schedule.length + 1,
+                postcode: depot,
+                action: 'Return to Depot',
+                arrival: minutesToTime(returnTime),
+                departure: minutesToTime(returnTime),
+                duration: 0,
+                type: 'return',
+                timeWindow: 'none'
+            });
+
+            displayResults(schedule, startTime, endTime, returnTime, totalDrivingTime, postcodes.length, timeWindowViolations);
+        }
+
+        function displayResults(schedule, startTime, endTime, returnTime, totalDrivingTime, stopCount, timeWindowViolations) {
+            const resultsSection = document.getElementById('resultsSection');
+            const alertContainer = document.getElementById('alertContainer');
+            const summaryContainer = document.getElementById('summaryContainer');
+            const scheduleBody = document.getElementById('scheduleBody');
+
+            alertContainer.innerHTML = '';
+            summaryContainer.innerHTML = '';
+            scheduleBody.innerHTML = '';
+
+            let alerts = '';
+            const stopDuration = parseInt(document.getElementById('stopDuration').value);
+            const lunchDuration = parseInt(document.getElementById('lunchDuration').value);
+
+            if (timeWindowViolations.length > 0) {
+                alerts += `<div class="alert error">⚠️ Time window violations detected:<br/>${timeWindowViolations.join('<br/>')}<br/>Consider adjusting stop durations or schedule parameters.</div>`;
+            }
+
+            if (returnTime > endTime) {
+                alerts += `<div class="alert error">⚠️ Route exceeds available time. Returns at ${minutesToTime(returnTime)} but must be back by ${minutesToTime(endTime)}.</div>`;
+            } else {
+                const bufferTime = endTime - returnTime;
+                alerts += `<div class="alert success">✓ Route fits within available time with ${bufferTime} minutes buffer.</div>`;
+            }
+
+            alertContainer.innerHTML = alerts;
+
+            summaryContainer.innerHTML = `
+                <div class="summary-card">
+                    <div class="summary-label">Total Stops</div>
+                    <div class="summary-value">${stopCount}</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Total Driving Time</div>
+                    <div class="summary-value">${totalDrivingTime} mins</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Total Stop Time</div>
+                    <div class="summary-value">${stopCount * parseInt(document.getElementById('stopDuration').value)} mins</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Lunch Break</div>
+                    <div class="summary-value">${lunchDuration} mins</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Return to Depot</div>
+                    <div class="summary-value">${minutesToTime(returnTime)}</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Available Time</div>
+                    <div class="summary-value">${minutesToTime(endTime - startTime)}</div>
+                </div>
+            `;
+
+            schedule.forEach(item => {
+                const row = document.createElement('tr');
+                let rowClass = '';
+                if (item.type === 'lunch') rowClass = 'action-lunch';
+                else if (item.type === 'return') rowClass = 'action-return';
+                row.className = rowClass;
+
+                let timeWindowDisplay = '—';
+                if (item.timeWindow === 'pre-10') {
+                    timeWindowDisplay = `<span class="time-window pre-10${item.violatesWindow ? ' breach' : ''}">Before 10:00am ${item.violatesWindow ? '❌' : '✓'}</span>`;
+                } else if (item.timeWindow === 'pre-12') {
+                    timeWindowDisplay = `<span class="time-window pre-12${item.violatesWindow ? ' breach' : ''}">Before 12:00pm ${item.violatesWindow ? '❌' : '✓'}</span>`;
+                }
+
+                row.innerHTML = `
+                    <td class="stop-number">${item.type === 'lunch' || item.type === 'return' ? '—' : item.number}</td>
+                    <td class="postcode">${item.postcode}</td>
+                    <td>${item.action}</td>
+                    <td class="time">${item.arrival}</td>
+                    <td class="time">${item.departure}</td>
+                    <td>${item.duration} min</td>
+                    <td>${timeWindowDisplay}</td>
+                `;
+                scheduleBody.appendChild(row);
+            });
+
+            resultsSection.classList.add('active');
+            resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            alertContainer.innerHTML = `<div class="alert ${type}">${message}</div>`;
+        }
+
+        function copyScheduleToClipboard() {
+            const table = document.getElementById('scheduleTable');
+            let text = 'DELIVERY ROUTE SCHEDULE\n';
+            text += '=======================\n\n';
+
+            Array.from(table.rows).forEach(row => {
+                const cells = Array.from(row.cells).map(cell => cell.textContent.trim());
+                text += cells.join(' | ') + '\n';
+            });
+
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Schedule copied to clipboard!');
+            });
+        }
+
+        function clearForm() {
+            document.getElementById('depot').value = 'RG20TG';
+            document.getElementById('startTime').value = '08:00';
+            document.getElementById('endTime').value = '16:00';
+            document.getElementById('stopDuration').value = '20';
+            document.getElementById('lunchDuration').value = '50';
+            document.getElementById('lunchDeadline').value = '12:55';
+            document.getElementById('postcodes').value = '';
+            document.getElementById('timeWindowSection').classList.add('hidden');
+            document.getElementById('calculateButtonGroup').style.display = 'none';
+            clearResults();
+            postcodeTimeWindows = {};
+        }
+
+        function clearResults() {
+            document.getElementById('resultsSection').classList.remove('active');
+        }
+
+        // Pre-populate sample data on load
+        window.addEventListener('load', () => {
+            const samplePostcodes = ['RG128FZ', 'RG12 9RF', 'HP15 6SP', 'RG2 7UG', 'HP12 4HS', 'RG12 7TB', 'RG6 6DQ', 'GU20 6PP', 'RG41 5HG', 'RG1 1LZ', 'SL1 4EP'];
+            document.getElementById('postcodes').value = samplePostcodes.join('\n');
+        });
+    </script>
+</body>
+</html>
